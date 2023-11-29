@@ -5,9 +5,6 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
-import os
-import sklearn
-
 
 app = FastAPI()
 
@@ -23,19 +20,18 @@ class Item(BaseModel):
     seller_type: str
     transmission: str
     owner: str
-    mileage: str 
+    mileage: str
     engine: str
     max_power: str
     torque: str
     seats: float
 
 
-
 class Items(BaseModel):
     objects: List[Item]
 
-scaler = joblib.load('scaler.pickle')
 
+scaler = joblib.load('scaler.pickle')
 
 
 def transform_input_data(item):
@@ -115,19 +111,17 @@ def transform_input_data(item):
     return pd.DataFrame(df_scaled)
 
 
-
 @app.post("/predict_item")
 def predict_item(item: Item) -> float:
-
     item_transformed = transform_input_data(item)
     log_prediction = model.predict(item_transformed)
     prediction = np.exp(log_prediction)
 
     return round(prediction[0], 1)
 
+
 @app.post("/predict_items")
 def predict_items(items: List[Item]) -> List[float]:
-
     items_transformed = [transform_input_data(item) for item in items]
     items_df = pd.concat(items_transformed, ignore_index=True)
     log_predictions = model.predict(items_df)
@@ -136,9 +130,9 @@ def predict_items(items: List[Item]) -> List[float]:
 
     return rounded_predictions
 
+
 @app.post("/predict_csv")
 async def predict_csv(file: UploadFile = File(...)):
-
     df = pd.read_csv(file.file)
 
     df_transformed = pd.concat([transform_input_data(row) for _, row in df.iterrows()])
